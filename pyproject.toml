@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "new_admin_panel_sprint_1"
+version = "0.1.0"
+description = ""
+authors = ["mishastik78 <mishastik78@yande.ru>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Faker = "^13.3.1"
+psycopg2-binary = "^2.9.3"
+python-dotenv = "^0.19.2"
+Django = "3.2"
+django-split-settings = "^1.1.0"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^4.0.1"
+isort = "^5.10.1"
+django-debug-toolbar = "^3.2.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
