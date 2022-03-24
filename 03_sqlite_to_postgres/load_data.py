@@ -1,15 +1,16 @@
 import logging
+import os
 import sqlite3
 from dataclasses import astuple, make_dataclass
 
 import psycopg2
+from dotenv import load_dotenv
 from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor, execute_batch
 
 
-class SQLiteLoader:
-    sql = "SELECT name FROM sqlite_master WHERE type='table';"
-    datacls = None
+class DbParser:
+    sql = ''
 
     def __init__(self, connection: sqlite3.Connection | _connection) -> None:
         self.cursor = connection.cursor()
@@ -25,6 +26,11 @@ class SQLiteLoader:
             d[0] if d[0] not in REPLACE_COL_NAMES else
             REPLACE_COL_NAMES[d[0]] for d in self.cursor.description
         ]
+
+
+class SQLiteLoader(DbParser):
+    sql = "SELECT name FROM sqlite_master WHERE type='table';"
+    datacls = None
 
     def _create_table_class(self, table: str) -> None:
         self.datacls = make_dataclass(
@@ -45,7 +51,7 @@ class SQLiteLoader:
         return [self.datacls(*row) for row in data]
 
 
-class PostgresSaver(SQLiteLoader):
+class PostgresSaver(DbParser):
     sql = """SELECT table_name FROM information_schema.tables
                             WHERE table_schema = 'content'"""
 
@@ -90,12 +96,13 @@ def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
+    load_dotenv()
     dsl = {
-        'dbname': 'movies_db',
-        'user': 'app',
-        'password': '123qwe',
-        'host': '127.0.0.1',
-        'port': 5432,
+        'dbname': os.getenv('DBNAME'),
+        'user': os.getenv('USER'),
+        'password': os.getenv('PASSWORD'),
+        'host': os.getenv('HOST'),
+        'port': os.getenv('PORT'),
         'options': '-c search_path=content',
     }
     REPLACE_COL_NAMES = {
@@ -109,3 +116,5 @@ if __name__ == '__main__':
     except ConnectionError as e:
         logging.exception(e)
         raise
+    finally:
+        sqlite_conn.close()

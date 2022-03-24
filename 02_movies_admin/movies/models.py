@@ -32,6 +32,7 @@ class Genre(UUIDMixin, TimeStampedMixin):
     name = models.CharField(
         _('name'),
         max_length=255,
+        unique=True,
     )
     description = models.TextField(
         _('description'),
@@ -51,6 +52,7 @@ class Person(UUIDMixin, TimeStampedMixin):
     full_name = models.CharField(
         _('fullname'),
         max_length=255,
+        db_index=True,
     )
 
     class Meta:
@@ -71,6 +73,7 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
     title = models.CharField(
         _('title'),
         max_length=255,
+        db_index=True,
     )
     description = models.TextField(
         _('description'),
@@ -79,6 +82,7 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
     creation_date = models.DateField(
         _('creation_date'),
         blank=True,
+        db_index=True,
     )
     rating = models.FloatField(
         _('rating'),
@@ -87,6 +91,7 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
             MinValueValidator(0),
             MaxValueValidator(100),
         ],
+        db_index=True,
     )
     type = models.CharField(
         _('type'),
@@ -132,9 +137,21 @@ class GenreFilmwork(UUIDMixin):
 
     class Meta:
         db_table = "content\".\"genre_film_work"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['film work', 'genre'],
+                name='film_work_genre_idx',
+            ),
+        ]
 
 
 class PersonFilmWork(UUIDMixin):
+
+    class PersonRole(models.TextChoices):
+        DIRECTOR = 'director', _('director')
+        ACTOR = 'actor', _('actor')
+        WRITER = 'writer', _('writer')
+
     film_work = models.ForeignKey(
         Filmwork,
         on_delete=models.CASCADE,
@@ -143,8 +160,10 @@ class PersonFilmWork(UUIDMixin):
         Person,
         on_delete=models.CASCADE,
     )
-    role = models.TextField(
+    role = models.CharField(
         _('role'),
+        max_length=50,
+        choices=PersonRole.choices,
     )
     created = models.DateTimeField(
         auto_now_add=True,
@@ -152,3 +171,9 @@ class PersonFilmWork(UUIDMixin):
 
     class Meta:
         db_table = "content\".\"person_film_work"
+        indexes = [
+            models.Index(
+                fields=['film_work', 'person'],
+                name='film_work_person_idx',
+            )
+        ]

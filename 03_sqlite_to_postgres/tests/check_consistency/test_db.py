@@ -1,7 +1,9 @@
 import logging
+import os
 import sqlite3
 
 import psycopg2
+from dotenv import load_dotenv
 from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor
 
@@ -52,12 +54,13 @@ def check_dbs(connection: sqlite3.Connection, pg_conn: _connection) -> None:
 if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
     sqlite_path = '../../db.sqlite'
+    load_dotenv()
     dsl = {
-        'dbname': 'movies_db',
-        'user': 'app',
-        'password': '123qwe',
-        'host': '127.0.0.1',
-        'port': 5432,
+        'dbname': os.getenv('DBNAME'),
+        'user': os.getenv('USER'),
+        'password': os.getenv('PASSWORD'),
+        'host': os.getenv('HOST'),
+        'port': os.getenv('PORT'),
         'options': '-c search_path=content',
     }
     check_tables = (
@@ -80,3 +83,5 @@ if __name__ == '__main__':
     except ConnectionError as e:
         logging.exception(e)
         raise
+    finally:
+        sqlite_conn.close()
